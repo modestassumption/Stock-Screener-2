@@ -1,6 +1,6 @@
 # NSE Stock Screener — Full-Stack v2
 
-A fast, comprehensive Indian equity analysis platform built with **FastAPI** (Python), **React** (Vite), and **yfinance**.
+An equity analysis platform built with **FastAPI** (Python), **React** (Vite), and **yfinance**. Built on my previous personal project.
 
 This document is divided into two sections:
 1. **User Guide**: How to use the application interface.
@@ -8,7 +8,7 @@ This document is divided into two sections:
 
 ---
 
-## 👩‍💻 User Guide (How to Use the App)
+## User Guide (How to Use the App)
 
 Once the application is running, you can access the frontend at `http://localhost:5173`. The app is divided into 4 main sections accessible via the left sidebar.
 
