@@ -1,0 +1,1 @@
+export const INITIAL_CAPITAL = 1000000;

@@ -1,0 +1,18 @@
+# Ignore all environment variables and secrets
+.env
+.env.*
+
+# Ignore databases
+*.db
+backend/data/
+
+# Ignore python and node environments
+backend/venv/
+backend/__pycache__/
+frontend/node_modules/
+frontend/dist/
+
+# OS/IDE metadata
+.DS_Store
+.vscode/
+.idea/
