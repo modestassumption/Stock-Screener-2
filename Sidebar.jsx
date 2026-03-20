@@ -1,10 +1,10 @@
 import { NavLink } from 'react-router-dom'
 
 const NAV = [
-  { to: '/',          icon: '◈', label: 'Overview' },
-  { to: '/screener',  icon: '⊞', label: 'Screener' },
-  { to: '/chart',     icon: '◻', label: 'Chart' },
-  { to: '/backtest',  icon: '⟲', label: 'Backtest' },
+  { to: '/', icon: '◈', label: 'Overview' },
+  { to: '/screener', icon: '⊞', label: 'Screener' },
+  { to: '/chart', icon: '◻', label: 'Chart' },
+  { to: '/backtest', icon: '⟲', label: 'Backtest' },
 ]
 
 export default function Sidebar() {
@@ -16,13 +16,17 @@ export default function Sidebar() {
     }}>
       {/* Logo */}
       <div style={{ padding: '24px 20px 20px', borderBottom: '1px solid var(--border)' }}>
-        <div style={{ fontFamily: 'var(--font-ui)', fontWeight: 800, fontSize: 18,
-          letterSpacing: '-0.02em', color: 'var(--text)' }}>
+        <div style={{
+          fontFamily: 'var(--font-ui)', fontWeight: 800, fontSize: 18,
+          letterSpacing: '-0.02em', color: 'var(--text)'
+        }}>
           <span style={{ color: 'var(--accent)' }}>NSE</span> Screener
         </div>
-        <div style={{ fontSize: 10, color: 'var(--muted)', fontFamily: 'var(--font-mono)',
-          marginTop: 2, letterSpacing: '0.1em' }}>
-          INDIA EQUITY PLATFORM
+        <div style={{
+          fontSize: 10, color: 'var(--muted)', fontFamily: 'var(--font-mono)',
+          marginTop: 2, letterSpacing: '0.1em'
+        }}>
+          AN EQUITY PLATFORM
         </div>
       </div>
 
@@ -47,8 +51,10 @@ export default function Sidebar() {
 
       {/* Footer */}
       <div style={{ padding: '16px 20px', borderTop: '1px solid var(--border)' }}>
-        <div style={{ fontSize: 10, color: 'var(--border2)', fontFamily: 'var(--font-mono)',
-          lineHeight: 1.8 }}>
+        <div style={{
+          fontSize: 10, color: 'var(--border2)', fontFamily: 'var(--font-mono)',
+          lineHeight: 1.8
+        }}>
           Data: Yahoo Finance<br />
           Real-time: Finnhub (opt.)<br />
           <span style={{ color: 'var(--green)', fontSize: 10 }}>● API connected</span>

@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { runBacktest, getStrategies } from '../lib/api'
+import { runBacktest, getStrategies, getTickers } from '../lib/api'
 import { useApi, useManualApi } from '../hooks/useApi'
 import {
   Button, Input, Select, RangeSlider,
-  SectionHeader, Badge, DataTable, Spinner, ErrorBox, EmptyState,
+  SectionHeader, Badge, DataTable, Spinner, ErrorBox, EmptyState, TickerDropdown
 } from '../components/UI'
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine, Legend,
@@ -96,6 +96,9 @@ export default function Backtest() {
   const [trailingStop, setTrailing] = useState(0)
   const { data, loading, error, execute } = useManualApi()
 
+  const { data: tickersData } = useApi(() => getTickers('ALL'))
+  const allTickers = tickersData?.tickers || []
+
   const strategies = strats?.strategies || []
   const selectedStrat = strategy || strategies[0] || ''
 
@@ -135,9 +138,11 @@ export default function Backtest() {
         borderRadius: 'var(--radius-lg)', padding: '20px 24px', marginBottom: 24 }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
           gap: 14, marginBottom: 16 }}>
-          <Input label="Ticker" value={ticker}
-            onChange={e => setTicker(e.target.value.toUpperCase())}
-            placeholder="e.g. TCS.NS" />
+          <div style={{ zIndex: 10 }}>
+            <TickerDropdown label="Ticker" value={ticker}
+              onChange={setTicker} tickers={allTickers}
+              placeholder="e.g. TCS.NS" />
+          </div>
           <Select label="Strategy" value={selectedStrat}
             onChange={e => setStrategy(e.target.value)}
             options={strategies.map(s => ({ label: s, value: s }))} />

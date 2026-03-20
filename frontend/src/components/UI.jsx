@@ -253,3 +253,85 @@ export function RangeSlider({ label, min, max, value, onChange, step = 1 }) {
     </div>
   )
 }
+
+// ── TickerDropdown ────────────────────────────────────────────────────────────
+import { useEffect, useRef } from 'react'
+
+export function TickerDropdown({ label, value, onChange, onSelect, tickers = [], placeholder }) {
+  const [open, setOpen] = useState(false)
+  const [visibleCount, setVisibleCount] = useState(15)
+  const containerRef = useRef(null)
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  const filtered = tickers.filter(t => 
+    t.ticker.toUpperCase().includes((value || '').toUpperCase()) || 
+    (t.name && t.name.toUpperCase().includes((value || '').toUpperCase()))
+  )
+
+  return (
+    <div style={{ position: 'relative', width: '100%' }} ref={containerRef}>
+      <Input label={label} value={value} 
+        onChange={e => {
+          onChange(e.target.value.toUpperCase());
+          setOpen(true);
+          setVisibleCount(15);
+        }}
+        onFocus={() => { setOpen(true); setVisibleCount(15) }}
+        placeholder={placeholder}
+        onKeyDown={e => {
+          if (e.key === 'Enter') {
+            setOpen(false)
+            onSelect?.(value)
+          }
+        }}
+      />
+      {open && filtered.length > 0 && (
+        <div style={{ 
+          position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 100, 
+          background: 'var(--bg2)', border: '1px solid var(--border)', 
+          maxHeight: 220, overflowY: 'auto', borderRadius: '0 0 6px 6px',
+          boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
+        }}
+        onScroll={e => {
+          if (e.target.scrollHeight - e.target.scrollTop <= e.target.clientHeight + 40) {
+            setVisibleCount(c => c + 15)
+          }
+        }}>
+          {filtered.slice(0, visibleCount).map(t => (
+            <div key={t.ticker} style={{ 
+              padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid var(--border2)',
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 12
+            }} 
+            onMouseDown={e => {
+              // Mouse down fires before input blur
+              e.preventDefault();
+              onChange(t.ticker); 
+              setOpen(false); 
+              onSelect?.(t.ticker);
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = 'var(--bg3)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+            >
+              <span style={{ color: 'var(--accent)', fontWeight: 600, fontFamily: 'var(--font-mono)' }}>{t.ticker.replace('.NS', '')}</span>
+              <span style={{ color: 'var(--muted)', fontSize: 10, textAlign: 'right', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '60%' }}>{t.name}</span>
+            </div>
+          ))}
+          {visibleCount < filtered.length && (
+            <div style={{ padding: 10, textAlign: 'center', fontSize: 10, color: 'var(--muted)' }}>
+              Scroll for more...
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}

@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { createChart, CrosshairMode } from 'lightweight-charts'
-import { getOHLCV, getFundamentals, getQuote } from '../lib/api'
-import { Button, Input, Select, StatCard, Spinner, ErrorBox } from '../components/UI'
+import { getOHLCV, getFundamentals, getQuote, getTickers } from '../lib/api'
+import { useApi } from '../hooks/useApi'
+import { Button, Input, Select, StatCard, Spinner, ErrorBox, TickerDropdown } from '../components/UI'
 
 const PERIODS = [
   { label: '3M', value: 90 },
@@ -29,6 +30,9 @@ export default function Chart() {
   const [error, setError] = useState(null)
   const [overlay, setOverlay] = useState('sma')  // sma | bb | none
 
+  const { data: tickersData } = useApi(() => getTickers('ALL'))
+  const allTickers = tickersData?.tickers || []
+
   const chartRef = useRef(null)
   const containerRef = useRef(null)
   const rsiRef = useRef(null)
@@ -50,8 +54,6 @@ export default function Chart() {
     } catch (e) { setError(e.message) }
     finally { setLoading(false) }
   }
-
-  useEffect(() => { load(ticker, days) }, [ticker, days])
 
   // Build charts
   useEffect(() => {
@@ -169,16 +171,27 @@ export default function Chart() {
 
       {/* Search bar */}
       <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end', marginBottom: 16, flexWrap: 'wrap' }}>
-        <div style={{ flex: 1, minWidth: 200 }}>
-          <Input label="Ticker (Yahoo Finance format)"
-            value={input} onChange={e => setInput(e.target.value.toUpperCase())}
-            onKeyDown={e => { if (e.key === 'Enter') { setTicker(input.includes('.') ? input : input + '.NS') } }}
-            placeholder="e.g. RELIANCE.NS \u00B7 TCS.NS \u00B7 INFY.NS" />
+        <div style={{ flex: 1, minWidth: 200, zIndex: 10 }}>
+          <TickerDropdown label="Ticker (Yahoo Finance format)" 
+            value={input} onChange={setInput} tickers={allTickers}
+            placeholder="e.g. RELIANCE.NS \u00B7 TCS.NS \u00B7 INFY.NS" 
+            onSelect={t => {
+              const full = t.includes('.') ? t : t + '.NS';
+              setTicker(full);
+            }} />
         </div>
-        <Button onClick={() => { const t = input.includes('.') ? input : input + '.NS'; setTicker(t) }}>
+        <Button onClick={() => { 
+          const t = input.includes('.') ? input : input + '.NS'; 
+          setTicker(t);
+          load(t, days);
+        }}>
           Load
         </Button>
-        <Select label="Period" value={days} onChange={e => setDays(+e.target.value)}
+        <Select label="Period" value={days} onChange={e => {
+            const d = +e.target.value;
+            setDays(d);
+            if (ohlcv) load(ticker, d);
+          }}
           options={PERIODS.map(p => ({ label: p.label, value: p.value }))} />
         <Select label="Overlay" value={overlay} onChange={e => setOverlay(e.target.value)}
           options={[{ label: 'SMA 50/200', value: 'sma' }, { label: 'Bollinger Bands', value: 'bb' },
@@ -188,7 +201,11 @@ export default function Chart() {
       {/* Quick-pick tickers */}
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 20 }}>
         {POPULAR.map(t => (
-          <button key={t} onClick={() => { setInput(t + '.NS'); setTicker(t + '.NS') }} style={{
+          <button key={t} onClick={() => { 
+              const full = t + '.NS';
+              setInput(full); 
+              setTicker(full);
+            }} style={{
             padding: '3px 10px', borderRadius: 4, border: '1px solid var(--border2)',
             background: ticker === t + '.NS' ? 'var(--accent2)' : 'transparent',
             color: ticker === t + '.NS' ? 'var(--accent)' : 'var(--muted)',

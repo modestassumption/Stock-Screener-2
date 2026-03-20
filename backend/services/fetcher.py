@@ -227,6 +227,12 @@ class DataFetcher:
         ]
 
     def get_nse_tickers(self, index: str = "Nifty 50") -> List[str]:
+        if index == "ALL":
+            all_tickers = set()
+            for idx in NSE_INDICES.keys():
+                all_tickers.update(self.get_nse_tickers(idx))
+            return sorted(list(all_tickers)) if all_tickers else DEFAULT_WATCHLIST
+
         url = NSE_INDICES.get(index)
         if not url:
             return DEFAULT_WATCHLIST
