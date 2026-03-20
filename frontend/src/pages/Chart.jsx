@@ -57,11 +57,6 @@ export default function Chart() {
   useEffect(() => {
     if (!ohlcv?.records?.length || !containerRef.current) return
 
-    // Destroy old charts
-    chartRef.current?.remove()
-    rsiRef.current?.remove()
-    macdRef.current?.remove()
-
     const records = ohlcv.records
 
     const chartOpts = {
@@ -101,17 +96,17 @@ export default function Chart() {
     // Overlay indicators
     if (overlay === 'sma' || overlay === 'both') {
       const sma50 = chart.addLineSeries({ color: '#58a6ff', lineWidth: 1.5, title: 'SMA50' })
-      sma50.setData(records.filter(r => r.SMA_50 != null).map(r => ({ time: r.date, value: r.SMA_50 })))
+      sma50.setData(records.map(r => r.SMA_50 != null ? { time: r.date, value: r.SMA_50 } : { time: r.date }))
       const sma200 = chart.addLineSeries({ color: '#f0b429', lineWidth: 1.5, title: 'SMA200' })
-      sma200.setData(records.filter(r => r.SMA_200 != null).map(r => ({ time: r.date, value: r.SMA_200 })))
+      sma200.setData(records.map(r => r.SMA_200 != null ? { time: r.date, value: r.SMA_200 } : { time: r.date }))
     }
     if (overlay === 'bb' || overlay === 'both') {
       const upper = chart.addLineSeries({ color: '#7d859055', lineWidth: 1, lineStyle: 2, title: 'BB+' })
-      upper.setData(records.filter(r => r.BB_Upper != null).map(r => ({ time: r.date, value: r.BB_Upper })))
+      upper.setData(records.map(r => r.BB_Upper != null ? { time: r.date, value: r.BB_Upper } : { time: r.date }))
       const lower = chart.addLineSeries({ color: '#7d859055', lineWidth: 1, lineStyle: 2, title: 'BB-' })
-      lower.setData(records.filter(r => r.BB_Lower != null).map(r => ({ time: r.date, value: r.BB_Lower })))
+      lower.setData(records.map(r => r.BB_Lower != null ? { time: r.date, value: r.BB_Lower } : { time: r.date }))
       const mid = chart.addLineSeries({ color: '#7d859077', lineWidth: 1, title: 'BB mid' })
-      mid.setData(records.filter(r => r.BB_Middle != null).map(r => ({ time: r.date, value: r.BB_Middle })))
+      mid.setData(records.map(r => r.BB_Middle != null ? { time: r.date, value: r.BB_Middle } : { time: r.date }))
     }
 
     // ── RSI chart ───────────────────────────────────────────────────────
@@ -119,7 +114,7 @@ export default function Chart() {
     rsiRef.current = rsiChart
     rsiChart.timeScale().applyOptions({ visible: false })
     const rsiSeries = rsiChart.addLineSeries({ color: '#bc8cff', lineWidth: 1.5 })
-    rsiSeries.setData(records.filter(r => r.RSI != null).map(r => ({ time: r.date, value: r.RSI })))
+    rsiSeries.setData(records.map(r => r.RSI != null ? { time: r.date, value: r.RSI } : { time: r.date }))
     rsiChart.addLineSeries({ color: '#f8514940', lineWidth: 1, lineStyle: 2 })
       .setData(records.map(r => ({ time: r.date, value: 70 })))
     rsiChart.addLineSeries({ color: '#3fb95040', lineWidth: 1, lineStyle: 2 })
@@ -129,14 +124,14 @@ export default function Chart() {
     const macdChart = createChart(macdContainer.current, { ...chartOpts, height: 100 })
     macdRef.current = macdChart
     const hist = macdChart.addHistogramSeries({ lineWidth: 0 })
-    hist.setData(records.filter(r => r.MACD_Hist != null).map(r => ({
+    hist.setData(records.map(r => r.MACD_Hist != null ? {
       time: r.date, value: r.MACD_Hist,
       color: r.MACD_Hist >= 0 ? '#3fb95088' : '#f8514988',
-    })))
+    } : { time: r.date }))
     const macdLine = macdChart.addLineSeries({ color: '#58a6ff', lineWidth: 1 })
-    macdLine.setData(records.filter(r => r.MACD != null).map(r => ({ time: r.date, value: r.MACD })))
+    macdLine.setData(records.map(r => r.MACD != null ? { time: r.date, value: r.MACD } : { time: r.date }))
     const sig = macdChart.addLineSeries({ color: '#f0b429', lineWidth: 1 })
-    sig.setData(records.filter(r => r.MACD_Signal != null).map(r => ({ time: r.date, value: r.MACD_Signal })))
+    sig.setData(records.map(r => r.MACD_Signal != null ? { time: r.date, value: r.MACD_Signal } : { time: r.date }))
 
     // Sync timescales
     function syncHandler(range) {
