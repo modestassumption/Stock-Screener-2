@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { runBacktest, getStrategies, getTickers } from '../lib/api'
-import { useApi, useManualApi } from '../hooks/useApi'
+import { useApi, useManualApi, globalCache } from '../hooks/useApi'
 import {
   Button, Input, Select, RangeSlider,
   SectionHeader, Badge, DataTable, Spinner, ErrorBox, EmptyState, TickerDropdown
@@ -88,13 +88,13 @@ const CustomTooltip = ({ active, payload, label }) => {
 
 export default function Backtest() {
   const { data: strats } = useApi(getStrategies)
-  const [ticker, setTicker]         = useState('RELIANCE.NS')
-  const [strategy, setStrategy]     = useState('')
+  const [ticker, setTicker]         = useState(globalCache.bt_ticker || 'RELIANCE.NS')
+  const [strategy, setStrategy]     = useState(globalCache.bt_strategy || '')
   const [days, setDays]             = useState(1095)
-  const [capital, setCapital]       = useState(INITIAL_CAPITAL)
-  const [stopLoss, setStopLoss]     = useState(8)
-  const [trailingStop, setTrailing] = useState(0)
-  const { data, loading, error, execute } = useManualApi()
+  const [capital, setCapital]       = useState(globalCache.bt_capital || INITIAL_CAPITAL)
+  const [stopLoss, setStopLoss]     = useState(globalCache.bt_stopLoss || 8)
+  const [trailingStop, setTrailing] = useState(globalCache.bt_trailingStop || 0)
+  const { data, loading, error, execute } = useManualApi('backtest_results')
 
   const { data: tickersData } = useApi(() => getTickers('ALL'))
   const allTickers = tickersData?.tickers || []
@@ -140,22 +140,22 @@ export default function Backtest() {
           gap: 14, marginBottom: 16 }}>
           <div style={{ zIndex: 10 }}>
             <TickerDropdown label="Ticker" value={ticker}
-              onChange={setTicker} tickers={allTickers}
+              onChange={v => { setTicker(v); globalCache.bt_ticker = v; }} tickers={allTickers}
               placeholder="e.g. TCS.NS" />
           </div>
           <Select label="Strategy" value={selectedStrat}
-            onChange={e => setStrategy(e.target.value)}
+            onChange={e => { const v = e.target.value; setStrategy(v); globalCache.bt_strategy = v; }}
             options={strategies.map(s => ({ label: s, value: s }))} />
           <Select label="History" value={days} onChange={e => setDays(+e.target.value)}
             options={PERIODS.map(p => ({ label: p.label, value: p.value }))} />
           <Input label="Capital ₹" type="number" value={capital}
-            onChange={e => setCapital(+e.target.value)} />
+            onChange={e => { const v = +e.target.value; setCapital(v); globalCache.bt_capital = v; }} />
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
           gap: 16, marginBottom: 16 }}>
-          <RangeSlider label="Stop Loss %" min={1} max={30} value={stopLoss} onChange={setStopLoss} />
-          <RangeSlider label="Trailing Stop % (0=off)" min={0} max={30} value={trailingStop} onChange={setTrailing} />
+          <RangeSlider label="Stop Loss %" min={1} max={30} value={stopLoss} onChange={v => { setStopLoss(v); globalCache.bt_stopLoss = v; }} />
+          <RangeSlider label="Trailing Stop % (0=off)" min={0} max={30} value={trailingStop} onChange={v => { setTrailing(v); globalCache.bt_trailingStop = v; }} />
         </div>
 
         <Button onClick={handleRun} loading={loading} style={{ minWidth: 160 }}>

@@ -1,13 +1,15 @@
 import { useState, useEffect, useCallback } from 'react'
 
+export const globalCache = {}
+
 /**
  * Generic data-fetching hook.
  * Usage:
  *   const { data, loading, error, refetch } = useApi(fn, [deps])
  */
-export function useApi(fn, deps = []) {
-  const [data, setData]       = useState(null)
-  const [loading, setLoading] = useState(true)
+export function useApi(fn, deps = [], cacheKey = null) {
+  const [data, setData]       = useState(cacheKey ? (globalCache[cacheKey] || null) : null)
+  const [loading, setLoading] = useState(cacheKey ? !globalCache[cacheKey] : true)
   const [error, setError]     = useState(null)
 
   const run = useCallback(async () => {
@@ -16,6 +18,7 @@ export function useApi(fn, deps = []) {
     try {
       const result = await fn()
       setData(result)
+      if (cacheKey) globalCache[cacheKey] = result
     } catch (e) {
       setError(e.message)
     } finally {
@@ -35,8 +38,8 @@ export function useApi(fn, deps = []) {
  *   const { data, loading, error, execute } = useManualApi()
  *   execute(async () => runScreener(params))
  */
-export function useManualApi() {
-  const [data, setData]       = useState(null)
+export function useManualApi(cacheKey = null) {
+  const [data, setData]       = useState(cacheKey ? (globalCache[cacheKey] || null) : null)
   const [loading, setLoading] = useState(false)
   const [error, setError]     = useState(null)
 
@@ -46,6 +49,7 @@ export function useManualApi() {
     try {
       const result = await fn()
       setData(result)
+      if (cacheKey) globalCache[cacheKey] = result
       return result
     } catch (e) {
       setError(e.message)

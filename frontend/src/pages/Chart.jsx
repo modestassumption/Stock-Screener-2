@@ -2,8 +2,9 @@ import { useState, useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { createChart, CrosshairMode } from 'lightweight-charts'
 import { getOHLCV, getFundamentals, getQuote, getTickers } from '../lib/api'
-import { useApi } from '../hooks/useApi'
-import { Button, Input, Select, StatCard, Spinner, ErrorBox, TickerDropdown } from '../components/UI'
+import { useApi, globalCache } from '../hooks/useApi'
+import { Button, Input, Select, StatCard, Spinner, ErrorBox, TickerDropdown, EmptyState } from '../components/UI'
+import { TrendingUp } from 'lucide-react'
 
 const PERIODS = [
   { label: '3M', value: 90 },
@@ -20,15 +21,17 @@ function fmt(v, d = 2) { return v != null ? Number(v).toFixed(d) : '—' }
 
 export default function Chart() {
   const [params] = useSearchParams()
-  const [ticker, setTicker] = useState((params.get('ticker') || 'RELIANCE.NS').toUpperCase())
+  const paramTicker = params.get('ticker')?.toUpperCase()
+  
+  const [ticker, setTicker] = useState(paramTicker || globalCache.chart_ticker || 'RELIANCE.NS')
   const [input, setInput] = useState(ticker)
-  const [days, setDays] = useState(365)
-  const [ohlcv, setOhlcv] = useState(null)
-  const [fund, setFund] = useState(null)
-  const [quote, setQuote] = useState(null)
+  const [days, setDays] = useState(globalCache.chart_days || 365)
+  const [ohlcv, setOhlcv] = useState((paramTicker && paramTicker !== globalCache.chart_ticker) ? null : (globalCache.chart_ohlcv || null))
+  const [fund, setFund] = useState((paramTicker && paramTicker !== globalCache.chart_ticker) ? null : (globalCache.chart_fund || null))
+  const [quote, setQuote] = useState((paramTicker && paramTicker !== globalCache.chart_ticker) ? null : (globalCache.chart_quote || null))
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-  const [overlay, setOverlay] = useState('sma')  // sma | bb | none
+  const [overlay, setOverlay] = useState(globalCache.chart_overlay || 'sma')  // sma | bb | none
 
   const { data: tickersData } = useApi(() => getTickers('ALL'))
   const allTickers = tickersData?.tickers || []
@@ -51,6 +54,11 @@ export default function Chart() {
         getQuote(t).catch(() => ({})),
       ])
       setOhlcv(o); setFund(f); setQuote(q)
+      globalCache.chart_ohlcv = o
+      globalCache.chart_fund = f
+      globalCache.chart_quote = q
+      globalCache.chart_ticker = t
+      globalCache.chart_days = d
     } catch (e) { setError(e.message) }
     finally { setLoading(false) }
   }
@@ -193,7 +201,10 @@ export default function Chart() {
             if (ohlcv) load(ticker, d);
           }}
           options={PERIODS.map(p => ({ label: p.label, value: p.value }))} />
-        <Select label="Overlay" value={overlay} onChange={e => setOverlay(e.target.value)}
+        <Select label="Overlay" value={overlay} onChange={e => {
+            setOverlay(e.target.value);
+            globalCache.chart_overlay = e.target.value;
+          }}
           options={[{ label: 'SMA 50/200', value: 'sma' }, { label: 'Bollinger Bands', value: 'bb' },
           { label: 'Both', value: 'both' }, { label: 'None', value: 'none' }]} />
       </div>
@@ -277,6 +288,10 @@ export default function Chart() {
             <div ref={macdContainer} />
           </div>
         </>
+      )}
+      {!loading && !ohlcv && (
+        <EmptyState icon={TrendingUp} title="No chart data" 
+          sub={`Select a ticker and click Load to view analysis for ${ticker}.`} />
       )}
     </div>
   )

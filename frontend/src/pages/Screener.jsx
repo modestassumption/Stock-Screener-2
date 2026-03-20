@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { runScreener, getTickers } from '../lib/api'
-import { useManualApi, useApi } from '../hooks/useApi'
+import { useManualApi, useApi, globalCache } from '../hooks/useApi'
 import {
   Button, Input, Select, Toggle, RangeSlider,
   DataTable, SectionHeader, Badge, Spinner, ErrorBox, EmptyState,
@@ -65,18 +65,18 @@ const COLUMNS = [
 
 export default function Screener() {
   const navigate = useNavigate()
-  const [preset, setPreset]         = useState('custom')
-  const [index, setIndex]           = useState('Nifty 50')
-  const [minPrice, setMinPrice]     = useState(50)
-  const [maxPrice, setMaxPrice]     = useState(100000)
-  const [rsiMin, setRsiMin]         = useState(40)
-  const [rsiMax, setRsiMax]         = useState(75)
-  const [above200, setAbove200]     = useState(true)
-  const [above50, setAbove50]       = useState(true)
-  const [minRs, setMinRs]           = useState(60)
-  const [minVol, setMinVol]         = useState(100000)
+  const [preset, setPreset]         = useState(globalCache.scr_preset || 'custom')
+  const [index, setIndex]           = useState(globalCache.scr_index || 'Nifty 50')
+  const [minPrice, setMinPrice]     = useState(globalCache.scr_minPrice || 50)
+  const [maxPrice, setMaxPrice]     = useState(globalCache.scr_maxPrice || 100000)
+  const [rsiMin, setRsiMin]         = useState(globalCache.scr_rsiMin || 40)
+  const [rsiMax, setRsiMax]         = useState(globalCache.scr_rsiMax || 75)
+  const [above200, setAbove200]     = useState(globalCache.scr_above200 !== undefined ? globalCache.scr_above200 : true)
+  const [above50, setAbove50]       = useState(globalCache.scr_above50 !== undefined ? globalCache.scr_above50 : true)
+  const [minRs, setMinRs]           = useState(globalCache.scr_minRs || 60)
+  const [minVol, setMinVol]         = useState(globalCache.scr_minVol || 100000)
   const [showTickers, setShowTickers] = useState(false)
-  const { data, loading, error, execute } = useManualApi()
+  const { data, loading, error, execute } = useManualApi('screener_results')
   const { data: tickersData, loading: tickersLoading, execute: execTickers } = useManualApi()
 
   function handleViewTickers() {
@@ -87,15 +87,15 @@ export default function Screener() {
   }
 
   function applyPreset(p) {
-    setPreset(p)
+    setPreset(p); globalCache.scr_preset = p
     const vals = PRESETS[p]
     if (!vals) return
-    if (vals.rsi_min   != null) setRsiMin(vals.rsi_min)
-    if (vals.rsi_max   != null) setRsiMax(vals.rsi_max)
-    if (vals.above_sma200 != null) setAbove200(vals.above_sma200)
-    if (vals.above_sma50  != null) setAbove50(vals.above_sma50)
-    if (vals.min_rs    != null) setMinRs(vals.min_rs)
-    if (vals.min_volume != null) setMinVol(vals.min_volume)
+    if (vals.rsi_min   != null) { setRsiMin(vals.rsi_min); globalCache.scr_rsiMin = vals.rsi_min }
+    if (vals.rsi_max   != null) { setRsiMax(vals.rsi_max); globalCache.scr_rsiMax = vals.rsi_max }
+    if (vals.above_sma200 != null) { setAbove200(vals.above_sma200); globalCache.scr_above200 = vals.above_sma200 }
+    if (vals.above_sma50  != null) { setAbove50(vals.above_sma50); globalCache.scr_above50 = vals.above_sma50 }
+    if (vals.min_rs    != null) { setMinRs(vals.min_rs); globalCache.scr_minRs = vals.min_rs }
+    if (vals.min_volume != null) { setMinVol(vals.min_volume); globalCache.scr_minVol = vals.min_volume }
   }
 
   function handleRun() {
@@ -143,7 +143,10 @@ export default function Screener() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 16 }}>
           <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
             <div style={{ flex: 1 }}>
-              <Select label="Index" value={index} onChange={e => {setIndex(e.target.value); setShowTickers(false)}}
+              <Select label="Index" value={index} onChange={e => {
+                  const val = e.target.value;
+                  setIndex(val); globalCache.scr_index = val; setShowTickers(false)
+                }}
                 options={INDICES} />
             </div>
             <Button onClick={handleViewTickers} variant="ghost" style={{ padding: '7px 10px', height: 35 }}>
@@ -151,25 +154,25 @@ export default function Screener() {
             </Button>
           </div>
           <Input label="Min Price ₹" type="number" value={minPrice}
-            onChange={e => { setMinPrice(+e.target.value); setPreset('custom'); }} />
+            onChange={e => { const v = +e.target.value; setMinPrice(v); globalCache.scr_minPrice = v; setPreset('custom'); globalCache.scr_preset='custom'; }} />
           <Input label="Max Price ₹" type="number" value={maxPrice}
-            onChange={e => { setMaxPrice(+e.target.value); setPreset('custom'); }} />
+            onChange={e => { const v = +e.target.value; setMaxPrice(v); globalCache.scr_maxPrice = v; setPreset('custom'); globalCache.scr_preset='custom'; }} />
           <Input label="Min Volume" type="number" value={minVol}
-            onChange={e => { setMinVol(+e.target.value); setPreset('custom'); }} />
+            onChange={e => { const v = +e.target.value; setMinVol(v); globalCache.scr_minVol = v; setPreset('custom'); globalCache.scr_preset='custom'; }} />
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
           gap: 16, marginTop: 16 }}>
-          <RangeSlider label="RSI Min" min={0} max={100} value={rsiMin} onChange={v => { setRsiMin(v); setPreset('custom'); }} />
-          <RangeSlider label="RSI Max" min={0} max={100} value={rsiMax} onChange={v => { setRsiMax(v); setPreset('custom'); }} />
-          <RangeSlider label="Min RS Rating" min={0} max={100} value={minRs} onChange={v => { setMinRs(v); setPreset('custom'); }} />
+          <RangeSlider label="RSI Min" min={0} max={100} value={rsiMin} onChange={v => { setRsiMin(v); globalCache.scr_rsiMin = v; setPreset('custom'); globalCache.scr_preset='custom'; }} />
+          <RangeSlider label="RSI Max" min={0} max={100} value={rsiMax} onChange={v => { setRsiMax(v); globalCache.scr_rsiMax = v; setPreset('custom'); globalCache.scr_preset='custom'; }} />
+          <RangeSlider label="Min RS Rating" min={0} max={100} value={minRs} onChange={v => { setMinRs(v); globalCache.scr_minRs = v; setPreset('custom'); globalCache.scr_preset='custom'; }} />
         </div>
 
         <div style={{ display: 'flex', gap: 24, marginTop: 16, alignItems: 'center',
           flexWrap: 'wrap', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', gap: 24 }}>
-            <Toggle label="Above SMA 200" checked={above200} onChange={v => { setAbove200(v); setPreset('custom'); }} />
-            <Toggle label="Above SMA 50"  checked={above50}  onChange={v => { setAbove50(v); setPreset('custom'); }} />
+            <Toggle label="Above SMA 200" checked={above200} onChange={v => { setAbove200(v); globalCache.scr_above200 = v; setPreset('custom'); globalCache.scr_preset='custom'; }} />
+            <Toggle label="Above SMA 50"  checked={above50}  onChange={v => { setAbove50(v); globalCache.scr_above50 = v; setPreset('custom'); globalCache.scr_preset='custom'; }} />
           </div>
           <Button onClick={handleRun} loading={loading} style={{ minWidth: 150 }}>
             <Play size={14} fill="currentColor" /> Run Screener

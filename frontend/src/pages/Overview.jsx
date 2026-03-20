@@ -67,10 +67,10 @@ function MoverRow({ m, isGainer }) {
 }
 
 export default function Overview() {
-  const { data: overview, loading: ol } = useApi(getMarketOverview)
-  const { data: movers,   loading: ml } = useApi(getTopMovers)
-  const { data: news,     loading: nl } = useApi(getMarketNews)
-  const { data: univ } = useApi(() => getTickers("Nifty 50"))
+  const { data: overview, loading: ol } = useApi(getMarketOverview, [], 'overview_indices')
+  const { data: movers,   loading: ml } = useApi(getTopMovers, [], 'overview_movers')
+  const { data: news,     loading: nl } = useApi(getMarketNews, [], 'overview_news')
+  const { data: univ } = useApi(() => getTickers("Nifty 50"), [], 'overview_univ')
 
   const indices = overview ? Object.entries(overview) : []
 
