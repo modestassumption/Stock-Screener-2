@@ -105,7 +105,14 @@ class DataFetcher:
         if not force_refresh and self._is_fresh(ticker):
             df = self._load_from_cache(ticker)
             if df is not None and not df.empty:
-                return df
+                if df.index.tz is not None:
+                    df.index = df.index.tz_localize(None)
+                
+                cutoff = datetime.now() - timedelta(days=days)
+                # If cache has enough history (allowing 7 days overlap for holidays/weekends)
+                if df.index.min() <= cutoff + timedelta(days=7):
+                    return df[df.index >= cutoff]
+                
         df = self._download_yfinance(ticker, days)
         if df is not None and not df.empty:
             self._save_to_cache(ticker, df)

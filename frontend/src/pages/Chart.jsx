@@ -64,7 +64,12 @@ export default function Chart() {
       grid: { vertLines: { color: '#21262d' }, horzLines: { color: '#21262d' } },
       crosshair: { mode: CrosshairMode.Normal },
       rightPriceScale: { borderColor: '#21262d' },
-      timeScale: { borderColor: '#21262d', timeVisible: true },
+      timeScale: { 
+        borderColor: '#21262d', 
+        timeVisible: true,
+        fixLeftEdge: true, 
+        fixRightEdge: true 
+      },
       handleScroll: true, handleScale: true,
     }
 
